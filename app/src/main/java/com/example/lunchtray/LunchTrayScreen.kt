@@ -15,27 +15,61 @@
  */
 package com.example.lunchtray
 
+import androidx.annotation.StringRes
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavHost
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.lunchtray.ui.OrderViewModel
 
-enum class LunchTrayScreen() {
-    Start, EntreeMenu, SideDishMenu, AccompanimentMenu, Checkout
+enum class LunchTrayScreen(@StringRes val title: Int) {
+    Start(title = R.string.app_name),
+    EntreeMenu(title = R.string.choose_entree),
+    SideDishMenu(title = R.string.choose_side_dish),
+    AccompanimentMenu(title = R.string.choose_accompaniment),
+    Checkout(title = R.string.order_checkout)
 }
-
-// TODO: AppBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+fun AppBar(
+    currentScreen: LunchTrayScreen,
+    canNavigateBack: Boolean,
+    onNavigateUp: () -> Unit,
+) {
+    CenterAlignedTopAppBar(
+        title = {
+            Text(text = stringResource(currentScreen.title))
+        },
+        navigationIcon = {
+            if (canNavigateBack) {
+                IconButton(onClick = onNavigateUp) {
+                    Icon(
+                        imageVector = Icons.Filled.ArrowBack,
+                        contentDescription = stringResource(R.string.back_button)
+                    )
+                }
+            }
+        }
+    )
+}
+
+@Composable
 fun LunchTrayApp(
+    viewModel: OrderViewModel = viewModel(),
     navController: NavHostController = rememberNavController()
 ) {
 
@@ -44,12 +78,13 @@ fun LunchTrayApp(
         backStackEntry?.destination?.route ?: LunchTrayScreen.Start.name
     )
 
-    // Create ViewModel
-    val viewModel: OrderViewModel = viewModel()
-
     Scaffold(
         topBar = {
-            // TODO: AppBar
+            AppBar(
+                currentScreen = currentScreen,
+                canNavigateBack = navController.previousBackStackEntry != null,
+                onNavigateUp = { navController.navigateUp() }
+            )
         }
     ) { innerPadding ->
         val uiState by viewModel.uiState.collectAsState()
